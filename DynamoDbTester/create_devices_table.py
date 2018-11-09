@@ -5,16 +5,16 @@ dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="htt
 
 # Create the DynamoDB table.
 table = dynamodb.create_table(
-    TableName='Devices',
+    TableName='Devices_data',
     KeySchema=[
         {
             'AttributeName': 'Device_id',
             'KeyType': 'HASH'
         },
         {
-            #valor deve seguir <timestamp>_<created_at> onde <timestamp> 
+            #valor deve seguir <created_at><count> onde <created_at> é o momento de criacao e <count> um valor de 3 digitos 
             # é recebido do cliente e <created_at> gerado pelo servidor no momento que recebe o request
-            'AttributeName': 'Timestamp_CreatedAt',
+            'AttributeName': 'CreatedAt_count',
             'KeyType': 'RANGE'
         }
     ],
@@ -24,7 +24,7 @@ table = dynamodb.create_table(
             'AttributeType': 'S'
         },
         {
-            'AttributeName': 'Timestamp_CreatedAt',
+            'AttributeName': 'CreatedAt_count',
             'AttributeType': 'N'
         },
 
@@ -36,7 +36,7 @@ table = dynamodb.create_table(
 )
 
 # Wait until the table exists.
-table.meta.client.get_waiter('table_exists').wait(TableName='Devices')
+table.meta.client.get_waiter('table_exists').wait(TableName='Devices_data')
 
 # Print out some data about the table.
 print(table.item_count)

@@ -1,5 +1,6 @@
 import boto3
-from .models import Device
+from boto3.dynamodb.conditions import Key, Attr
+from .models import Device_data
 
 dynamodb = None
 table = None
@@ -11,15 +12,47 @@ def get_db():
     return dynamodb
 
 
-def insert(item):
-    pass
+def get_table():
+    global dynamodb
+    global table
+    if table is None:
+        get_db()
+    table = dynamodb.Table('Devices_data')
+    return table
 
 
-def delete(item):
-    pass
+def insert_device_data(item):
+    itm = {}
+    itm['Device_id'] = item.id
+    itm['CreatedAt_Count'] = (item.created_at*1000) + item.count
+    itm['Data'] = item.data
+    
+    return table.put_item(
+        Item=itm
+    )
 
 
-def update(item):
+def query_device_data_by_id(device_id=None, max_items=1000, start_date=None, end_date=None):
+    
+
+# for _ in range(10):
+#     itm = {}
+#     itm['Device_id'] = fake.name()
+#     for __ in range(10):
+#         j = Device(id=itm['Device_id'],created_at=fake.pyint(),data={'email':fake.free_email()},count=fake.pyint())
+#         print(ctr.insert_device_data(j))
+
+def delete_device_data(item):
+    itm = {}
+    itm['Device_id'] = item.id
+    itm['CreatedAt_Count'] = (item.created_at*1000) + item.count
+    
+    return table.delete_item(
+        Key=itm
+    )
+
+
+def update_device_data(item):
     pass
 
 
@@ -27,7 +60,7 @@ def update(item):
 def create_devices_table():
     global table
     table = dynamodb.create_table(
-        TableName='Devices',
+        TableName='Devices_data',
         KeySchema=[
             {
                 'AttributeName': 'Device_id',
@@ -49,7 +82,7 @@ def create_devices_table():
                 'AttributeName': 'CreatedAt_Count',
                 'AttributeType': 'N'
             },
-
+    
         ],
         ProvisionedThroughput={
             'ReadCapacityUnits': 5,
@@ -58,9 +91,9 @@ def create_devices_table():
     )
     
     # Wait until the table exists.
-    table.meta.client.get_waiter('table_exists').wait(TableName='Devices')
+    table.meta.client.get_waiter('table_exists').wait(TableName='Devices_data')
     
     # Print out some data about the table.
-    print(table.item_count)
+    # print(table.item_count)
     
     return table
