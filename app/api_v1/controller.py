@@ -24,7 +24,7 @@ def get_table():
 def insert_device_data(item):
     itm = {}
     itm['Device_id'] = item.id
-    itm['CreatedAt_Count'] = (item.created_at*1000) + item.count
+    itm['CreatedAt_Count'] = ( (item.created_at*1000) + item.count )
     itm['Data'] = item.data
     
     return table.put_item(
@@ -44,12 +44,17 @@ def query_device_data_by_id(device_id=None, max_items=1000, start_date=None, end
 
 def delete_device_data(item):
     itm = {}
-    itm['Device_id'] = item.id
-    itm['CreatedAt_Count'] = (item.created_at*1000) + item.count
+    if hasattr(item, 'id'):
+        itm['Device_id'] = item.id
+    else:
+        itm['Device_id'] = item['Device_id']
     
-    return table.delete_item(
-        Key=itm
-    )
+    if hasattr(item, 'created_at'):
+        itm['CreatedAt_Count'] = ((item.created_at*1000) + item.count) or item['CreatedAt_Count']
+    else:
+        itm['CreatedAt_Count'] = item['CreatedAt_Count']
+    
+    return table.delete_item(Key=itm)
 
 
 def update_device_data(item):
