@@ -33,14 +33,16 @@ def insert_device_data(item):
 
 
 def query_device_data_by_id(device_id=None, max_items=1000, start_date=None, end_date=None):
-    
+    pass
 
-# for _ in range(10):
-#     itm = {}
-#     itm['Device_id'] = fake.name()
-#     for __ in range(10):
-#         j = Device(id=itm['Device_id'],created_at=fake.pyint(),data={'email':fake.free_email()},count=fake.pyint())
-#         print(ctr.insert_device_data(j))
+
+def create_dummy_data():
+    for _ in range(10):
+        itm = {}
+        itm['Device_id'] = fake.name()
+        for __ in range(10):
+            j = Device(id=itm['Device_id'],created_at=fake.pyint(),data={'email':fake.free_email()},count=fake.pyint())
+            print(ctr.insert_device_data(j))
 
 def delete_device_data(item):
     itm = {}
