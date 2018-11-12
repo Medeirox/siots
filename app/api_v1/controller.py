@@ -1,9 +1,12 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+from faker import Faker
 from .models import Device_data
 
 dynamodb = None
 table = None
+
+fake = Faker()
 
 # Get the service resource.
 def get_db():
@@ -32,17 +35,28 @@ def insert_device_data(item):
     )
 
 
-def query_device_data_by_id(device_id=None, max_items=1000, start_date=None, end_date=None):
-    pass
+def query_device_data_by_id(device_id=None, max_items=1000, start_date=0, end_date=9999999999):
+    if device_id is None:
+        return table.query(
+            KeyConditionExpression=Key('CreatedAt_Count').between(start_date, end_date),
+            Limit=max_items
+        )
+    else:    
+        return table.query(
+            KeyConditionExpression=Key('Device_id').eq(device_id) & Key('CreatedAt_Count').between(start_date, end_date),
+            Limit=max_items
+        )
 
 
 def create_dummy_data():
+    global table
     for _ in range(10):
         itm = {}
         itm['Device_id'] = fake.name()
         for __ in range(10):
-            j = Device(id=itm['Device_id'],created_at=fake.pyint(),data={'email':fake.free_email()},count=fake.pyint())
-            print(ctr.insert_device_data(j))
+            j = Device_data(id=itm['Device_id'],created_at=fake.pyint(),data={'email':fake.free_email()},count=fake.pyint())
+            print(insert_device_data(j))
+
 
 def delete_device_data(item):
     itm = {}
@@ -61,6 +75,10 @@ def delete_device_data(item):
 
 def update_device_data(item):
     pass
+
+
+def get_all_items():
+    return table.scan()
 
 
 # Create the DynamoDB table.
