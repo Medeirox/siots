@@ -5,12 +5,12 @@ from . import main
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    return '<h1>Hello World!</h1>'
+    return render_template('index.html')
 
 @main.route('/user/<user>', methods=['GET', 'POST'])
 def user(user):
     return '<h1>Hello {0}!</h1>'.format(user)
 
-@main.route('/template/', methods=['GET', 'POST'])
-def template():
-    return render_template('base.html')
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    return render_template('auth/login.html')
