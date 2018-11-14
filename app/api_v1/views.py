@@ -26,9 +26,12 @@ def readLogData():
         output += "</html>"
     return (header+output).replace("<|>","<br>")
 
-@api_v1.route('/api/v1/login/<id>', methods=['GET', 'POST'])
-def login(id):
-    return 'Welcome {0}!'.format(id)
+@api_v1.route('/api/v1/login', methods=['GET', 'POST'])
+def login():
+    if(request.args['pass']=='pass'):
+        return 'Welcome {0}!'.format(request.args['user'])
+    else:
+        return 'login error'
 
 @api_v1.route('/api/v1/update.json', methods=['GET', 'POST'])
 def update_json():
