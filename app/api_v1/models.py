@@ -307,3 +307,36 @@ class Feed:
     @data.setter
     def data(self, value):
         self._data = value
+
+
+class Group:
+    def __init__(self):
+        self._name = ''
+        self._member_id = ''
+        self._member_type = ''
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+
+    @property
+    def member(self):
+        return self._member_id
+
+    @devices.setter
+    def member(self, value):
+        self._member_id = value
+
+
+    @property
+    def users(self):
+        return self._users
+
+    @users.setter
+    def users(self, value):
+        self._users = value
