@@ -2,9 +2,14 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from config import config
+import boto3
 import os
 
 bootstrap = Bootstrap()
+
+# Get the service resource.
+dynamodb = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+
 
 def create_app(config_name):
     app = Flask(__name__)

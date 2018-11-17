@@ -40,3 +40,4 @@ table.meta.client.get_waiter('table_exists').wait(TableName='Devices_data')
 
 # Print out some data about the table.
 print(table.item_count)
+

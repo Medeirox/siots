@@ -1,32 +1,22 @@
-# remover esta classe
-class Device_data:
-    def __init__(self, id, created_at, data={}, count=0):
-        check_id = isinstance(id, str)
-        check_created_at = isinstance(created_at, int)
-        check_count = isinstance(count, int)
-        check_data = isinstance(data, dict)
-        
-        self.id = id if check_id else False
-        self.created_at = created_at if check_created_at else False
-        self.count = count if check_count else False
-        self.data = data if check_data else False
-        
-        if( not (check_id and check_created_at and check_count and check_data) ):
-            raise TypeError('Wrong data type passed for: {a} {b} {c} {d}'.format(
-                a = '' if check_id else 'id,',
-                b = '' if check_created_at else 'created_at,',
-                c = '' if check_count else 'count,',
-                d = '' if check_data else 'data'
-            ))
-        else:
-            return
-    
-    def __repr__(self):
-        return '{{"id":"{a}", "created_at":{b}, "count":{c:03d}, "data":{d}}}'.format(a=self.id, b=self.created_at, c=self.count, d=self.data)
+from . import dynamodb
+
+def create_all_tables():
+    #Users
+    create_table('Users', 'username', 'S', 'email', 'S')
+    #Devices table
+    create_table('Devices', 'id', 'S', 'type', 'S')
+    #Feeds
+    create_table('Feeds', 'device_id', 'S', 'timestamp', 'N')
+    #Roles
+    #Groups
+
 
 
 class User:
+    __table_name__ = 'Users'
+
     def __init__(self):
+        self._username = ''  #hash key
         self._first_name = ''
         self._last_name = ''
         self._email = ''
@@ -37,6 +27,15 @@ class User:
         self._email_confirmed = False
         self._roles = {}
         self._groups = {}
+
+
+    @property
+    def username(self):
+        return self._username
+
+    @username.setter
+    def username(self, value):
+        self._username = value
 
 
     @property
@@ -128,9 +127,18 @@ class User:
     def groups(self, value):
         self._groups = value
 
+    
+    def get_user(username):
+        response = dynamodb.Table(__table_name__).get_item(
+            Key={
+                'username' : username
+            }
+        )
+
 
 class Device:
     def __init__(self):
+        self.__table_name__ = 'Devices'
         self._id = ''
         self._type = ''
         self._write_key = ''
@@ -235,9 +243,11 @@ class Device:
 
 class Role:
     def __init__(self):
+        self.__table_name__ = 'Roles'
         self._name = ''
+        self._username = ''
         self._group = ''
-        self._permissions = ['read']
+        self._permissions = []
 
     @property
     def name(self):
@@ -246,6 +256,15 @@ class Role:
     @name.setter
     def name(self, value):
         self._name = value
+
+
+    @property
+    def username(self):
+        self._username
+
+    @username.setter
+    def username(self, value):
+        self._username = value
 
 
     @property
@@ -268,18 +287,19 @@ class Role:
 
 class Feed:
     def __init__(self):
-        self._id = '' #Hash key
+        self.__table_name__ = 'Feeds'
+        self._device_id = '' #Hash key
         self._timestamp = 0 #range key
         self._created_at = 0 
         self._data = {}
 
     @property
-    def id(self):
-        return self._id
+    def device_id(self):
+        return self._device_id
 
     @id.setter
-    def id(self, value):
-        self._id = value
+    def device_id(self, value):
+        self._device_id = value
 
 
     @property
@@ -311,6 +331,7 @@ class Feed:
 
 class Group:
     def __init__(self):
+        self.__table_name__ = 'Groups'
         self._name = ''
         self._member_id = ''
         self._member_type = ''
@@ -340,3 +361,42 @@ class Group:
     @users.setter
     def users(self, value):
         self._users = value
+
+
+
+def create_table(tablename, hash_key_name, hash_key_type, range_key_name, range_key_type):
+    # Create the DynamoDB table.
+    table = dynamodb.create_table(
+        TableName=tablename,
+        KeySchema=[
+            {
+                'AttributeName': hash_key_name,
+                'KeyType': 'HASH'
+            },
+            {
+                'AttributeName': range_key_name,
+                'KeyType': 'RANGE'
+            }
+        ],
+        AttributeDefinitions=[
+            {
+                'AttributeName': hash_key_name,
+                'AttributeType': hash_key_type
+            },
+            {
+                'AttributeName': range_key_name,
+                'AttributeType': range_key_type
+            },
+
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 5,
+            'WriteCapacityUnits': 5
+        }
+    )
+
+    # Wait until the table exists.
+    table.meta.client.get_waiter('table_exists').wait(TableName=tablename)
+
+    # Print out some data about the table.
+    print(table.item_count)
