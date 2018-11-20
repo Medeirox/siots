@@ -1,14 +1,17 @@
 from . import dynamodb
+from . import create_tables
 
 def create_all_tables():
     #Users
-    create_table('Users', 'username', 'S', 'email', 'S')
+    create_users_table()
     #Devices table
-    create_table('Devices', 'id', 'S', 'type', 'S')
+    create_devices_table()
     #Feeds
-    create_table('Feeds', 'device_id', 'S', 'timestamp', 'N')
+    create_feeds_table()
     #Roles
+    create_roles_table()
     #Groups
+    create_groups_table()
 
 
 
@@ -58,7 +61,7 @@ class User:
 
     @property
     def email(self):
-        return self.email
+        return self._email
 
     @email.setter
     def email(self, value):
@@ -85,11 +88,11 @@ class User:
 
     @property
     def last_seen(self):
-        return _last_seen
+        return self._last_seen
 
     @last_seen.setter
     def last_seen(self, value):
-        _last_seen = value
+        self._last_seen = value
 
 
     @property
@@ -244,23 +247,30 @@ class Device:
 class Role:
     def __init__(self):
         self.__table_name__ = 'Roles'
-        self._name = ''
+        self.__hash_key__ = self._role
+        self.__hash_key_type__ = 'S'
+        self.__range_key__ = self._group
+        self.__range_key_type__ = 'S'
+        self.__secondary_range_key__ = self._group
+        self.__secondary_range_key_type__ = 'S'
+        
+        self._role = ''
         self._username = ''
         self._group = ''
         self._permissions = []
 
     @property
-    def name(self):
-        return self._name
+    def role(self):
+        return self._role
 
-    @name.setter
-    def name(self, value):
-        self._name = value
+    @role.setter
+    def role(self, value):
+        self._role = value
 
 
     @property
     def username(self):
-        self._username
+        return self._username
 
     @username.setter
     def username(self, value):
@@ -297,7 +307,7 @@ class Feed:
     def device_id(self):
         return self._device_id
 
-    @id.setter
+    @device_id.setter
     def device_id(self, value):
         self._device_id = value
 
@@ -346,11 +356,11 @@ class Group:
 
 
     @property
-    def member(self):
+    def member_id(self):
         return self._member_id
 
-    @devices.setter
-    def member(self, value):
+    @member_id.setter
+    def member_id(self, value):
         self._member_id = value
 
 
@@ -362,41 +372,3 @@ class Group:
     def users(self, value):
         self._users = value
 
-
-
-def create_table(tablename, hash_key_name, hash_key_type, range_key_name, range_key_type):
-    # Create the DynamoDB table.
-    table = dynamodb.create_table(
-        TableName=tablename,
-        KeySchema=[
-            {
-                'AttributeName': hash_key_name,
-                'KeyType': 'HASH'
-            },
-            {
-                'AttributeName': range_key_name,
-                'KeyType': 'RANGE'
-            }
-        ],
-        AttributeDefinitions=[
-            {
-                'AttributeName': hash_key_name,
-                'AttributeType': hash_key_type
-            },
-            {
-                'AttributeName': range_key_name,
-                'AttributeType': range_key_type
-            },
-
-        ],
-        ProvisionedThroughput={
-            'ReadCapacityUnits': 5,
-            'WriteCapacityUnits': 5
-        }
-    )
-
-    # Wait until the table exists.
-    table.meta.client.get_waiter('table_exists').wait(TableName=tablename)
-
-    # Print out some data about the table.
-    print(table.item_count)
