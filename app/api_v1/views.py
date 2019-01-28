@@ -5,6 +5,7 @@ from .models import Feed, Device
 import traceback
 import json
 import time
+import random, string
 
 #REMOVER
 @api_v1.route('/api/v1/log/', defaults={'data': None}, methods=['POST'])
@@ -44,6 +45,55 @@ def login():
 #     return 'ID: {0} | Operation: {1}'.format(id, op)
 
 
+@api_v1.route('/api/v1/<device_id>/register_device.json', methods=['GET', 'POST'])
+def register_device(device_id):
+
+    exists = False
+    creation_ok = False
+    json_parsed = ''
+
+    if(request.method == 'GET'):
+        json_parsed = request.args
+    
+    if(request.method == 'POST'):
+        json_parsed = request.get_json(True,True)
+
+    try:
+        dev = Device.get(str(device_id))
+        exists = True
+    except:
+        exists = False
+    try:
+        if(not exists):
+            #Generate write key
+            generated_write_key = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
+            #Generate activation key
+            generated_activation_key = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
+
+            admin_device = Device.get('admin_device')
+            if(admin_device.write_key == json_parsed['write_key']):
+                new_device = Device(id=device_id, 
+                                    device_type=json_parsed['device_type'],
+                                    write_key=generated_write_key, 
+                                    activation_key=generated_activation_key,
+                                    tag=json_parsed['device_type'], 
+                                    created_at=round(time.time(),3),
+                                    last_seen=round(time.time(),3), 
+                                    status='created',
+                                    enabled=0, 
+                                    config=json_parsed['config'] if 'config' in json_parsed else None)
+                new_device.save()
+                print('Just created a new device: {0}'.format(new_device))
+                creation_ok = True
+    except Exception as e:
+        print('Error during the creation of the Device {0}.\nError: {1}'.format(device_id, e))
+
+    if(exists or (not creation_ok) ):
+        return ('400')
+    else:
+        return ('200')
+
+
 #TODO FALTA VERIFICAR SE O WRITE_KEY CONFERE COM A TABELA DE DEVICES
 # Persiste o dado de um unico dispositivo na base de dados
 @api_v1.route('/api/v1/<device_id>/update.json', methods=['GET', 'POST'])
@@ -51,6 +101,8 @@ def update_json(device_id):
 
     try:
         data=''
+        errorCode=0
+        errorCodeDescription=''
         json_parsed=''
 
         if(request.method == 'POST'):
@@ -76,6 +128,8 @@ def update_json(device_id):
 
         if(not package_ok):
             print('Received data format is incorrect')
+            errorCode=1 #Received data format is incorrect
+            errorCodeDescription='Received data format is incorrect'
         else:
             #Verifica se o equipamento está cadastrado e se a chave confere
             try:
@@ -83,11 +137,16 @@ def update_json(device_id):
                 package_ok = True if dev.write_key == json_parsed['write_key'] else False
                 if(not package_ok):
                     print('Informed write_key differs from the database')
+                    errorCode=2
+                    errorCodeDescription='Informed write_key differs from the database'
 
             except Exception as ex:
                 print('There was a problem while looking for the Device_ID {0} \
                     in the database\nError:{1}'.format(json_parsed['device_id'], ex))
                 package_ok = False
+                errorCode=3
+                errorCodeDescription='There was a problem while looking for the Device_ID {0} \
+                    in the database'.format(json_parsed['device_id'])
 
         if package_ok:
             f = Feed(device_id=json_parsed['device_id'], 
@@ -103,7 +162,7 @@ def update_json(device_id):
                 # print(j)
                 print(f)
                 f.save()
-                print('Feed successfully persisted')
+                print('Feed successfully persisted\n{0}'.format(f._get_json()))
                 return str('200')
             #if(check_feed != '')
                 # if(check_feed.device_id == f.device_id and check_feed.timestamp == f.timestamp):
@@ -137,7 +196,8 @@ def update_json(device_id):
 
     # if(request.method == 'GET')
     # return str(request.args)
-    if(api_key == 0):
-        return 'Nenhuma api_key informada'
+    # if(api_key == 0):
+    #     return 'Nenhuma api_key informada'
     else:
-        return 'Database updated by {0}!'.format(api_key)
+        return str('400')
+        # return 'Database updated by {0}!'.format(api_key)
