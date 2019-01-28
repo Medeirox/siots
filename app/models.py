@@ -1,6 +1,8 @@
 from . import dynamodb
 from . import create_tables
 
+#TODO: REMODEL THE CLASS TO USE PYNAMODB PACKAGE
+
 def create_all_tables():
     #Users
     create_users_table()
